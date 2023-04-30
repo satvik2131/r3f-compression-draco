@@ -1,18 +1,17 @@
-import React from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Scene } from './Compression';
+import { OrbitControls } from '@react-three/drei';
+import FileUploader from './FileUploader';
 
 function App() {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <header>
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
-          Learn React
-        </a>
-      </header>
+    <div className='App'>
+      <FileUploader />
     </div>
+
   );
 }
+
+
 
 export default App;
