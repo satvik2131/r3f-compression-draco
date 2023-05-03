@@ -4,11 +4,13 @@ import { Canvas } from '@react-three/fiber';
 
 function FileUploader() {
     const [file, setFile] = useState(null);
+    const [name, setName] = useState(null);
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
         const reader = new FileReader();
 
+        setName(selectedFile.name);
         reader.onload = (event) => {
             const fileUrl = event.target.result;
             setFile(fileUrl);
@@ -20,7 +22,7 @@ function FileUploader() {
     if (file != null) {
         return (
             <Canvas>
-                <Model url={file} />
+                <Model url={file} name={name} />
             </Canvas>
         );
     }
