@@ -22,7 +22,7 @@ function FileUploader() {
     if (file != null) {
         return (
             <Canvas>
-                <Model url={file} name={name} />
+                <Model filepath={file} name={name} />
             </Canvas>
         );
     }
@@ -33,5 +33,7 @@ function FileUploader() {
         </div>
     );
 }
+
+
 
 export default FileUploader;
