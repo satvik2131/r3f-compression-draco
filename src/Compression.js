@@ -1,18 +1,17 @@
 import React, { useRef, useEffect } from "react";
 import { useLoader, useThree } from "@react-three/fiber";
-// const gltfPipeline = require("gltf-pipeline");
 import { OrbitControls } from "@react-three/drei";
+import { GLTFLoader } from "three-stdlib";
 //gltf-transform
 import { WebIO } from '@gltf-transform/core';
 import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
 import { draco, resample, prune, dedup } from "@gltf-transform/functions";
+import { ObjectLoader } from "three";
 
 
 export function Model({ filepath }) {
     const group = useRef();
-    // JSONParser(filepath);
     handleCompression(filepath);
-
 
     return (
         <group ref={group}>
@@ -20,7 +19,7 @@ export function Model({ filepath }) {
             <GetInfo />
             <ambientLight intensity={0.5} />
             <directionalLight intensity={1} position={[0, 10, 0]} />
-            {/* <primitive object={gltf.scene} /> */}
+            {/* <primitive object={model.scene} /> */}
         </group>
     );
 }
@@ -28,19 +27,19 @@ export function Model({ filepath }) {
 
 const handleCompression = async (path) => {
     try {
-
-
+        const encoderModule = new window.DracoEncoderModule();
+        const decoderModule = new window.DracoDecoderModule();
+        // console.log(window.DecoderModule);
         // Configure I/O.
         const io = new WebIO()
             .registerExtensions(KHRONOS_EXTENSIONS)
-        // .registerDependencies({
-        //     'draco3d.decoder': await new DracoEncoderModule(), // Optional.
-        //     'draco3d.encoder': await new DracoDecoderModule(), // Optional.
-        // });
+            .registerDependencies({
+                'draco3d.decoder': await decoderModule, // Optional.
+                'draco3d.encoder': await encoderModule, // Optional.
+            });
 
         // Read from URL.
         const document = await io.read(encodeURI(path));
-        console.log(document);
 
         await document.transform(
             // Losslessly resample animation frames.
@@ -51,21 +50,26 @@ const handleCompression = async (path) => {
             dedup(),
             // Compress mesh geometry with Draco.
             draco(),
-            // Convert textures to WebP (Requires glTF Transform v3 and Node.js).
-            // textureCompress({
-            //     encoder: sharp,
-            //     targetFormat: 'gltf',
-            //     resize: [1024, 2024],
-            // }),
         );
 
         // Write to byte array (Uint8Array).
-        const glb = await io.writeBinary(document);
-        console.log(glb);
+        const glbJson = await io.writeJSON(document);
+        const loader = new ObjectLoader();
+        console.log(glbJson);
+        const gltf = loader.parse(glbJson.json, (res) => { console.log(res); });
+        // console.log(gltf);
+        // const blob = new Blob([byteArrayGlb], { type: 'model/gltf+json' });
+        // const url = URL.createObjectURL(blob);
+
+        // const loader = new GLTFLoader();
+        // const gltf = loader.load(url, () => { });
+
     } catch (e) {
         console.log(e);
     }
 }
+
+
 
 //Get Render info
 const GetInfo = () => {
@@ -97,9 +101,6 @@ const JSONParser = async (path) => {
     // );
 
     //gltf-transform way of compression
-
-
-
 }
 
 export default Model;
