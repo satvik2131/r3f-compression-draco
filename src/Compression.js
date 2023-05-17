@@ -1,17 +1,20 @@
 import React, { useRef, useEffect } from "react";
 import { useLoader, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { GLTFLoader } from "three-stdlib";
+import { GLTFExporter, GLTFLoader } from "three-stdlib";
 //gltf-transform
 import { WebIO } from '@gltf-transform/core';
 import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
 import { draco, resample, prune, dedup } from "@gltf-transform/functions";
+import { saveAs } from "file-saver";
 import { ObjectLoader } from "three";
 
 
 export function Model({ filepath }) {
     const group = useRef();
-    handleCompression(filepath);
+    const { scene } = useThree();
+
+    handleCompression(filepath, scene);
 
     return (
         <group ref={group}>
@@ -19,13 +22,13 @@ export function Model({ filepath }) {
             <GetInfo />
             <ambientLight intensity={0.5} />
             <directionalLight intensity={1} position={[0, 10, 0]} />
-            {/* <primitive object={model.scene} /> */}
+            {/* <primitive object={scene} /> */}
         </group>
     );
 }
 
 
-const handleCompression = async (path) => {
+const handleCompression = async (path, scene) => {
     try {
         const encoderModule = new window.DracoEncoderModule();
         const decoderModule = new window.DracoDecoderModule();
@@ -52,17 +55,23 @@ const handleCompression = async (path) => {
             draco(),
         );
 
-        // Write to byte array (Uint8Array).
-        const glbJson = await io.writeJSON(document);
-        const loader = new ObjectLoader();
-        console.log(glbJson);
-        const gltf = loader.parse(glbJson.json, (res) => { console.log(res); });
-        // console.log(gltf);
-        // const blob = new Blob([byteArrayGlb], { type: 'model/gltf+json' });
-        // const url = URL.createObjectURL(blob);
+        //Write JSON
+        // const glbJson = await io.writeJSON(document);
+        // const jsonloader = new ObjectLoader();
+        // jsonloader.load(JSON.stringify(glbJson.json), function (obj) {
+        //     scene.add(obj);
+        // });
 
-        // const loader = new GLTFLoader();
-        // const gltf = loader.load(url, () => { });
+        // const loader = new ObjectLoader();
+        // console.log(glbJson);
+        // const gltf = loader.parse(glbJson.json, (res) => { console.log(res); });
+
+        // Write to byte array (Uint8Array).
+        const byteArrayGlb = await io.writeBinary(document);
+        const blob = new Blob([byteArrayGlb], { type: 'model/gltf+json' });
+        saveAs(blob, 'done.gltf');
+
+        // const url = URL.createObjectURL(blob);
 
     } catch (e) {
         console.log(e);
