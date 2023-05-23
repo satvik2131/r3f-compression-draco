@@ -1,117 +1,56 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { useLoader, useThree } from "@react-three/fiber";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { SimplifyModifier } from "three/examples/jsm/modifiers/SimplifyModifier";
 import { OrbitControls } from "@react-three/drei";
-import { DRACOLoader, GLTFExporter, GLTFLoader } from "three-stdlib";
-//gltf-transform
-import { WebIO } from '@gltf-transform/core';
-import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
-import { draco, resample, prune, dedup, textureCompress } from "@gltf-transform/functions";
-import { saveAs } from "file-saver";
-import { ObjectLoader } from "three";
+import { Group } from "three";
 
 
-export function Model({ filepath }) {
-    const group = useRef();
+export function Model({ url, name }) {
+    const modifier = new SimplifyModifier();
+
+    const loaders = {
+        glb: GLTFLoader,
+        gltf: GLTFLoader,
+        fbx: FBXLoader,
+        obj: OBJLoader,
+    };
+
     const { scene } = useThree();
+    var group = new Group();
 
-    handleCompression(filepath, scene);
+    const loader = name.split(".")[1];
+    const model = useLoader(loaders[loader], url);
+    const nodes = model.nodes;
+    for (let node in nodes) {
+        var obj = nodes[node];
+        if (obj.isMesh !== undefined && obj.isMesh) {
+            const simplified = obj.clone();
+            simplified.material = simplified.material.clone();
+            simplified.material.flatShading = true;
+            const count = Math.floor(simplified.geometry.attributes.position.count * 0.875); // number of vertices to remove
+            simplified.geometry = modifier.modify(simplified.geometry, count);
+            group.add(simplified);
+        }
+        scene.add(group);
+    }
 
+    // const group = useRef();
     return (
-        <group ref={group}>
+        <group>
             <OrbitControls />
-            <GetInfo />
             <ambientLight intensity={0.5} />
             <directionalLight intensity={1} position={[0, 10, 0]} />
-            {/* <primitive object={scene} /> */}
+            {loader === "gltf" || loader === "glb" ? (
+                <primitive object={scene} />
+            ) : (
+                <primitive object={model} />
+            )}
         </group>
     );
 }
 
-
-const handleCompression = async (path, scene) => {
-    try {
-        const encoderModule = new window.DracoEncoderModule();
-        const decoderModule = new window.DracoDecoderModule();
-
-        const ioOptions = {
-            webIO: {
-                binary: true, // Set to true for binary glTF (.glb) output
-                json: false, // Set to false to disable JSON (.gltf) output
-            },
-        };
-        // Configure I/O.
-        const io = new WebIO(ioOptions)
-            .registerExtensions(KHRONOS_EXTENSIONS)
-            .registerDependencies({
-                'draco3d.decoder': await decoderModule, // Optional.
-                'draco3d.encoder': await encoderModule, // Optional.
-            });
-
-        // Read from URL.
-        const document = await io.read(encodeURI(path));
-        await document.transform(
-            // Losslessly resample animation frames.
-            resample(),
-            // Remove unused nodes, textures, or other data.
-            prune(),
-            // Remove duplicate vertex or texture data, if any.
-            dedup(),
-            // Compress mesh geometry with Draco.
-            draco(),
-        );
-
-
-        //Write JSON
-        const glbJson = await io.writeBinary(document);
-        const loader = new GLTFLoader();
-        const dracoLoader = new DRACOLoader();
-        loader.setDRACOLoader(dracoLoader);
-        loader.parse(glbJson, '', (gltf) => {
-            console.log("huahua");
-            const gltfObject = gltf;
-            console.log(gltfObject);
-        });
-
-
-    } catch (e) {
-        console.log(e);
-    }
-}
-
-
-
-
-
-//Get Render info
-const GetInfo = () => {
-    const { gl } = useThree();
-    useEffect(() => {
-        // gl === WebGLRenderer
-        // gl.info.calls
-        console.log(gl.info);
-    });
-    return null;
-};
-
-
-const JSONParser = async (path) => {
-    //GLTF loader way of doing it 
-    // const loader = new GLTFLoader();
-    // loader.load(
-    //     path,
-    //     function (gltf) {
-    //         // The JSON data is stored in the "gltf" object
-    //         console.log(gltf);
-    //     },
-    //     function (xhr) {
-    //         console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-    //     },
-    //     function (error) {
-    //         console.log(error);
-    //     }
-    // );
-
-    //gltf-transform way of compression
-}
 
 export default Model;

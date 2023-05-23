@@ -16,8 +16,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "three": "^0.152.2",
-    "three-stdlib": "^2.21.11"
+    "three": "^0.152.2"
   },
   "scripts": {
     "start": "react-scripts start",

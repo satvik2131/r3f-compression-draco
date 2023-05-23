@@ -22,7 +22,7 @@ function FileUploader() {
     if (file != null) {
         return (
             <Canvas>
-                <Model filepath={file} name={name} />
+                <Model url={file} name={name} />
             </Canvas>
         );
     }
