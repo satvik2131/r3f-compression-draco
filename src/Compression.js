@@ -1,43 +1,33 @@
-import React, { useRef, useState } from 'react';
-import { useLoader } from '@react-three/fiber';
-
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
-
-// import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
-// import { DRACOExporter } from 'three/examples/jsm/exporters/DRACOExporter';
-// import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
-
-import { OrbitControls } from '@react-three/drei';
+import React from "react";
+import { useLoader, useThree } from "@react-three/fiber";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { OrbitControls } from "@react-three/drei";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { ObjectLoader } from "three";
 
 export function Model({ url, name }) {
+  // const json = model.parser.json;
+  // const objModel = useLoader(loaders.obj, json);
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath(
+    "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
+  );
+  dracoLoader.setDecoderConfig({ type: "js" });
+  const gltf = useLoader(GLTFLoader, url, (loader) => {
+    loader.setDRACOLoader(dracoLoader);
+  });
+  // const { scene } = useThree();
+  // const gltf = new ObjectLoader(json);
+  // scene.add(gltf);
 
-    const loaders = {
-        glb: GLTFLoader,
-        gltf: GLTFLoader,
-        fbx: FBXLoader,
-        obj: OBJLoader,
-    };
-
-    const loader = name.split(".")[1];
-    const model = useLoader(loaders[loader], url);
-    const group = useRef();
-
-
-    return (
-        <group ref={group}>
-            <OrbitControls />
-            <ambientLight intensity={0.5} />
-            <directionalLight intensity={1} position={[0, 10, 0]} />
-            {
-                loader === "gltf" || loader === "glb"
-                    ? <primitive object={model.scene} />
-                    : <primitive object={model} />
-            }
-
-        </group>
-    );
+  return (
+    <group>
+      <OrbitControls />
+      <ambientLight intensity={0.5} />
+      <directionalLight intensity={1} position={[0, 10, 0]} />
+      <primitive object={gltf.scene} />
+    </group>
+  );
 }
 
 export default Model;
